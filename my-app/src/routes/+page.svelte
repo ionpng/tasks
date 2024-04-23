@@ -1,44 +1,68 @@
 <script>
-    let tasks = [];
-    let newTask = "";
-    let newTaskType = "test"; // default task type
-    let filter = "all"; // default filter
-    $: filteredTasks = filter === "all" ? tasks : tasks.filter(task => task.type === filter);
-  
-    
-    function addTask() {
-      if (newTask) {
-        tasks = [...tasks, { text: newTask, type: newTaskType, completed: false }];
-        newTask = "";
-      }
+  import { onMount } from 'svelte';
+  import { fetchTasks, sendTask } from '$lib/supabaseClient.js';
+  import { v4 as uuidv4 } from 'uuid';
+
+  let uuid = uuidv4();
+  console.log(uuid)
+  // existing code...
+
+  let tasks = [];
+  let newTask = "";
+  let newTaskType = "test"; // default task type
+  let filter = "all"; // default filter
+
+  $: filteredTasks = filter === "all" ? tasks : tasks.filter(task => task.type === filter);
+  $: {
+      fetchTasks(uuid).then(data => {
+        if (data) tasks = data;
+      });
     }
-  
-    function deleteTask(index) {
-      tasks = tasks.filter((_, i) => i !== index);
+  async function addTask() {
+    if (newTask) {
+      const task = { text: newTask, type: newTaskType, completed: false };
+      tasks = [...tasks, task];
+      newTask = "";
+      await sendTask(task.text, task.type, uuid); // replace 'your-uuid' with actual uuid
     }
-  
-    function toggleComplete(index) {
-      tasks[index].completed = !tasks[index].completed;
-    }
-  
-    function filteredTasks() {
-      if (filter === "all") {
-        return tasks;
-      } else {
-        return tasks.filter(task => task.type === filter);
-      }
-    }
-  </script>
-  
-  <div class="container mx-auto p-4">
-    <div class="flex items-center mb-4">
-      <select bind:value={newTaskType} class="border border-gray-300 bg-white h-10 px-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md mr-2">
+  }
+
+  function toggleComplete(index) {
+    tasks[index].completed = !tasks[index].completed;
+  }
+
+  function deleteTask(index) {
+    tasks = tasks.filter((_, i) => i !== index);
+  }
+
+</script>
+
+<div class="flex h-screen bg-gray-100">
+  <!-- Sidebar -->
+  <div class="w-64 bg-white shadow-md">
+    <div class="px-6 py-4">
+      <h1 class="text-xl font-bold text-gray-800 mb-4">Tasks</h1>
+      <input class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500" type="text" bind:value={uuid} placeholder="Enter UUID" />
+      <label class="block text-sm font-medium text-gray-700 mb-1">Task Type</label>
+      <select bind:value={newTaskType} class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500">
         <option value="test">Test</option>
         <option value="homework">Homework</option>
         <option value="project">Project</option>
       </select>
+      <div class="mb-4">
+        <button class="{filter === 'all' ? 'bg-blue-500 text-white focus:outline-none focus:ring focus:ring-blue-500' : 'bg-gray-100 text-gray-700 focus:outline-none focus:ring focus:ring-blue-500'} w-full px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = "all"}>All</button>
+        <button class="{filter === 'test' ? 'bg-blue-500 text-white focus:outline-none focus:ring focus:ring-blue-500' : 'bg-gray-100 text-gray-700 focus:outline-none focus:ring focus:ring-blue-500'} w-full px-4 py-2 mt-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = "test"}>Tests</button>
+        <button class="{filter === 'homework' ? 'bg-blue-500 text-white focus:outline-none focus:ring focus:ring-blue-500' : 'bg-gray-100 text-gray-700 focus:outline-none focus:ring focus:ring-blue-500'} w-full px-4 py-2 mt-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = "homework"}>Homework</button>
+        <button class="{filter === 'project' ? 'bg-blue-500 text-white focus:outline-none focus:ring focus:ring-blue-500' : 'bg-gray-100 text-gray-700 focus:outline-none focus:ring focus:ring-blue-500'} w-full px-4 py-2 mt-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = "project"}>Projects</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="flex-1 overflow-y-auto p-4">
+    <div class="flex items-center mb-4">
       <input
-        class="border border-gray-300 bg-white h-10 px-5 pr-16 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md w-full"
+        class="border border-gray-300 bg-white h-10 px-5 pr-16 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md flex-1"
         type="text"
         placeholder="Add a task"
         bind:value={newTask}
@@ -51,16 +75,10 @@
         Add
       </button>
     </div>
-    <div class="mb-4">
-        <button class="{filter === 'all' ? 'bg-white-500  border-blue-500' : 'bg-white text-gray-700'} mr-2 px-4 py-2 border border-gray-300 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" on:click={() => filter = "all"}>All</button>
-        <button class="{filter === 'test' ? 'bg-white-500 border-blue-500' : 'bg-white text-gray-700'} mr-2 px-4 py-2 border border-gray-300 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" on:click={() => filter = "test"}>Tests</button>
-        <button class="{filter === 'homework' ? 'bg-white-500 border-blue-500' : 'bg-white text-gray-700'} mr-2 px-4 py-2 border border-gray-300 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" on:click={() => filter = "homework"}>Homework</button>
-        <button class="{filter === 'project' ? 'bg-white-500 border-blue-500' : 'bg-white text-gray-700'} px-4 py-2 border border-gray-300 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" on:click={() => filter = "project"}>Projects</button>
-      </div>
     <ul class="list-disc pl-5 mt-4">
       {#each filteredTasks as task, index (index)}
         <li class="flex justify-between items-center mb-2 bg-white p-4 rounded-lg shadow-md">
-          <span class="font-medium text-gray-700" class:line-through={task.completed}>{task.text} ({task.type})</span>
+          <span class="font-medium text-gray-700" class:line-through={task.completed}>{task.task_name} ({task.task_type})</span>
           <div>
             <button
               class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded shadow-md mr-2"
@@ -79,4 +97,4 @@
       {/each}
     </ul>
   </div>
-
+</div>
