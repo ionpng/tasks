@@ -23,7 +23,7 @@
       const task = { task_name: newTask, task_type: newTaskType, completed: false };
       tasks = [...tasks, task];
       newTask = "";
-      await sendTask(task.text, task.type, uuid); // replace 'your-uuid' with actual uuid
+      await sendTask(task.task_name, task.task_type, uuid); // replace 'your-uuid' with actual uuid
     }
   }
 
