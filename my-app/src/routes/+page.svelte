@@ -12,7 +12,7 @@
   let newTaskType = "test"; // default task type
   let filter = "all"; // default filter
 
-  $: filteredTasks = filter === "all" ? tasks : tasks.filter(task => task.type === filter);
+  $: filteredTasks = filter === "all" ? tasks : tasks.filter(task => task.task_type === filter);
   $: {
       fetchTasks(uuid).then(data => {
         if (data) tasks = data;
@@ -20,7 +20,7 @@
     }
   async function addTask() {
     if (newTask) {
-      const task = { text: newTask, type: newTaskType, completed: false };
+      const task = { task_name: newTask, task_type: newTaskType, completed: false };
       tasks = [...tasks, task];
       newTask = "";
       await sendTask(task.text, task.type, uuid); // replace 'your-uuid' with actual uuid
