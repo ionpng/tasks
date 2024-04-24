@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { fetchTasks, sendTask } from '$lib/supabaseClient.js';
+  import { fetchTasks, sendTask, delTask } from '$lib/supabaseClient.js';
   import { v4 as uuidv4 } from 'uuid';
 
   let uuid = uuidv4();
@@ -15,7 +15,9 @@
   $: filteredTasks = filter === "all" ? tasks : tasks.filter(task => task.task_type === filter);
   $: {
       fetchTasks(uuid).then(data => {
-        if (data) tasks = data;
+        if (data){
+          tasks = data;
+        } 
       });
     }
   async function addTask() {
@@ -31,10 +33,22 @@
     tasks[index].completed = !tasks[index].completed;
   }
 
-  function deleteTask(index) {
+  async function deleteTask(index) {
+    let taskId = (tasks[index].id);
     tasks = tasks.filter((_, i) => i !== index);
-  }
-
+    
+    try {
+        const deletedTask = await delTask(taskId);
+        if (deletedTask) {
+            console.error('Failed to delete task from Supabase');
+        }
+        else{
+          console.log("Deleted task successfully")
+        }
+    } catch (error) {
+        console.error('Error deleting task:', error);
+    }
+}
 </script>
 
 <div class="flex h-screen bg-gray-100">

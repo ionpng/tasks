@@ -39,3 +39,17 @@ export async function sendTask(task, taskType, uuid) {
         return null; // Return null in case of any unexpected errors
     }
 }
+
+export async function delTask(id) {
+    let { data, error } = await supabase
+          .from('tasks')
+          .delete()
+          .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting task:', error);
+      return null;
+  }
+
+    return data;
+    }
