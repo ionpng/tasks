@@ -25,7 +25,12 @@
       const task = { task_name: newTask, task_type: newTaskType, completed: false };
       tasks = [...tasks, task];
       newTask = "";
-      await sendTask(task.task_name, task.task_type, uuid); // replace 'your-uuid' with actual uuid
+      await sendTask(task.task_name, task.task_type, uuid); // replace 'your-uuid' with actual 
+      fetchTasks(uuid).then(data => {
+        if (data){
+          tasks = data;
+        } 
+      });
     }
   }
 
@@ -34,12 +39,23 @@
   }
 
   async function deleteTask(index) {
-    let taskId = (tasks[index].id);
+    if (index < 0 || index >= tasks.length) {
+        console.error('Invalid index', index);
+        return;
+    }
+
+    let task = tasks[index];
+    if (!task || !task.hasOwnProperty('id')) {
+        console.error('Task or task ID is undefined');
+        return;
+    }
+
+    let taskId = task.id;
     tasks = tasks.filter((_, i) => i !== index);
     
     try {
         const deletedTask = await delTask(taskId);
-        if (deletedTask) {
+        if (!deletedTask) {
             console.error('Failed to delete task from Supabase');
         }
         else{

@@ -41,15 +41,15 @@ export async function sendTask(task, taskType, uuid) {
 }
 
 export async function delTask(id) {
-    let { data, error } = await supabase
-          .from('tasks')
-          .delete()
-          .eq('id', id);
+  let { data, error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', id);
 
-    if (error) {
+  if (error) {
       console.error('Error deleting task:', error);
       return null;
   }
 
-    return data;
-    }
+  return data;
+}
