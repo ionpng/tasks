@@ -5,13 +5,15 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-export async function sendTask(task, taskType, uuid) {
+export async function sendTask(task, taskType, taskDescription, taskDueDate, uuid) {
     const { data, error } = await supabase
       .from('tasks')
       .insert([
         { 
           task_name: task, 
           task_type: taskType, 
+          task_description: taskDescription,
+          task_due_date: taskDueDate,
           uuid: uuid 
         }
       ])

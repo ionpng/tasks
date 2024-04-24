@@ -10,6 +10,9 @@
   let tasks = [];
   let newTask = "";
   let newTaskType = "test"; // default task type
+  let newTaskDescription = "";
+  let newTaskDueDate = null;
+
   let filter = "all"; // default filter
 
   $: filteredTasks = filter === "all" ? tasks : tasks.filter(task => task.task_type === filter);
@@ -20,19 +23,50 @@
         } 
       });
     }
-  async function addTask() {
-    if (newTask) {
-      const task = { task_name: newTask, task_type: newTaskType, completed: false };
-      tasks = [...tasks, task];
-      newTask = "";
-      await sendTask(task.task_name, task.task_type, uuid); // replace 'your-uuid' with actual 
-      fetchTasks(uuid).then(data => {
-        if (data){
-          tasks = data;
-        } 
-      });
-    }
+    async function addTask() {
+  if (newTask) {
+    const task = { 
+      task_name: newTask, 
+      task_type: newTaskType, 
+      description: newTaskDescription,
+      due_date: newTaskDueDate,
+      completed: false 
+    };
+    tasks = [...tasks, task];
+    newTask = "";
+    newTaskDescription = "";
+    newTaskDueDate = null;
+    await sendTask(task.task_name, task.task_type, task.description, task.due_date, uuid); 
+    // Fetching tasks after addition
+    fetchTasks(uuid).then(data => {
+      if (data){
+        tasks = data;
+      } 
+    });
   }
+}
+
+// Drag and drop functionality
+let dragItemIndex = null;
+
+function dragStart(index) {
+  dragItemIndex = index;
+}
+
+function dragOver(e) {
+  e.preventDefault();
+}
+
+function drop(index) {
+  const draggedItem = tasks[dragItemIndex];
+  const remainingTasks = tasks.filter((task, idx) => idx !== dragItemIndex);
+  tasks = [
+    ...remainingTasks.slice(0, index),
+    draggedItem,
+    ...remainingTasks.slice(index)
+  ];
+}
+
 
   function toggleComplete(index) {
     tasks[index].completed = !tasks[index].completed;
@@ -79,6 +113,9 @@
         <option value="homework">Homework</option>
         <option value="project">Project</option>
       </select>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Task Description</label>
+      <input class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500" type="text" bind:value={newTaskDescription} placeholder="Enter Description" />
+      <label class="block text-sm font-medium text-gray-700 mb-1">Filter</label>
       <div class="mb-4">
         <button class="{filter === 'all' ? 'bg-blue-500 text-white focus:outline-none focus:ring focus:ring-blue-500' : 'bg-gray-100 text-gray-700 focus:outline-none focus:ring focus:ring-blue-500'} w-full px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = "all"}>All</button>
         <button class="{filter === 'test' ? 'bg-blue-500 text-white focus:outline-none focus:ring focus:ring-blue-500' : 'bg-gray-100 text-gray-700 focus:outline-none focus:ring focus:ring-blue-500'} w-full px-4 py-2 mt-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = "test"}>Tests</button>
@@ -107,9 +144,11 @@
     </div>
     <ul class="list-disc pl-5 mt-4">
       {#each filteredTasks as task, index (index)}
-        <li class="flex justify-between items-center mb-2 bg-white p-4 rounded-lg shadow-md">
-          <span class="font-medium text-gray-700" class:line-through={task.completed}>{task.task_name} ({task.task_type})</span>
-          <div>
+          <li class="flex justify-between items-center mb-2 bg-white p-4 rounded-lg shadow-md" draggable="true" on:dragstart={() => dragStart(index)} on:dragover={(e) => dragOver(e)} on:drop={() => drop(index)}>
+            <span class="font-medium text-gray-700" class:line-through={task.completed}>
+              {task.task_name} ({task.task_type}) - {task.description} {#if task.due_date} - Due: {task.due_date}{/if}
+            </span>
+                <div>
             <button
               class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded shadow-md mr-2"
               on:click={() => toggleComplete(index)}
