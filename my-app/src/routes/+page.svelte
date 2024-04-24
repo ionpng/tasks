@@ -101,6 +101,20 @@ function drop(index) {
         console.error('Error deleting task:', error);
     }
 }
+
+function getTaskTypeIndicatorClass(taskType) {
+    switch (taskType) {
+        case 'test':
+            return 'bg-orange-500';
+        case 'homework':
+            return 'bg-yellow-500';
+        case 'project':
+            return 'bg-purple-500';
+        default:
+            return 'bg-gray-500'; // Default color if task type is not recognized
+    }
+}
+
 </script>
 
 <div class="flex h-screen bg-gray-100">
@@ -109,15 +123,15 @@ function drop(index) {
     <div class="px-6 py-4">
       <h1 class="text-xl font-bold text-gray-800 mb-4">Tasks</h1>
       <input class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500" type="text" bind:value={uuid} placeholder="Enter UUID" />
-      <label class="block text-sm font-medium text-gray-700 mb-1">Task Type</label>
+      <p class="block text-sm font-medium text-gray-700 mb-1">Task Type</p>
       <select bind:value={newTaskType} class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500">
         <option value="test">Test</option>
         <option value="homework">Homework</option>
         <option value="project">Project</option>
       </select>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Task Description</label>
+      <p class="block text-sm font-medium text-gray-700 mb-1">Task Description</p>
       <input class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500" type="text" bind:value={newTaskDescription} placeholder="Enter Description" />
-      <label class="block text-sm font-medium text-gray-700 mb-1">Filter</label>
+      <p class="block text-sm font-medium text-gray-700 mb-1">Filter</p>
       <div class="mb-4">
         <button class="{filter === 'all' ? 'bg-blue-500 text-white focus:outline-none focus:ring focus:ring-blue-500' : 'bg-gray-100 text-gray-700 focus:outline-none focus:ring focus:ring-blue-500'} w-full px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = "all"}>All</button>
         <button class="{filter === 'test' ? 'bg-blue-500 text-white focus:outline-none focus:ring focus:ring-blue-500' : 'bg-gray-100 text-gray-700 focus:outline-none focus:ring focus:ring-blue-500'} w-full px-4 py-2 mt-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = "test"}>Tests</button>
@@ -146,25 +160,30 @@ function drop(index) {
     </div>
     <ul class="list-disc pl-5 mt-4">
       {#each filteredTasks as task, index (index)}
-          <li class="flex justify-between items-center mb-2 bg-white p-4 rounded-lg shadow-md" draggable="true" on:dragstart={() => dragStart(index)} on:dragover={(e) => dragOver(e)} on:drop={() => drop(index)}>
+      <li class="flex justify-between items-center mb-2 bg-white p-4 rounded-lg shadow-md" draggable="true" on:dragstart={() => dragStart(index)} on:dragover={(e) => dragOver(e)} on:drop={() => drop(index)}>
+        <span class="flex items-center">
+            <!-- Colored indicator based on task type -->
+            <span class="{getTaskTypeIndicatorClass(task.task_type)} w-3 h-3 mr-2 rounded-full"></span>
             <span class="font-medium text-gray-700" class:line-through={task.completed}>
-              {task.task_name} ({task.task_type}) {#if task.task_description} - {task.task_description} {/if} {#if task.task_due_date} - Due: {task.task_due_date}{/if}
+                {task.task_name} {#if task.task_description} - {task.task_description} {/if} {#if task.task_due_date} - Due: {task.task_due_date}{/if}
             </span>
-                <div>
+        </span>
+        <div>
             <button
-              class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded shadow-md mr-2"
-              on:click={() => toggleComplete(index)}
+                class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded shadow-md mr-2"
+                on:click={() => toggleComplete(index)}
             >
-              {task.completed ? 'Undo' : 'Complete'}
+                {task.completed ? 'Undo' : 'Complete'}
             </button>
             <button
-              class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded shadow-md"
-              on:click={() => deleteTask(index)}
+                class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded shadow-md"
+                on:click={() => deleteTask(index)}
             >
-              Delete
+                Delete
             </button>
-          </div>
-        </li>
+        </div>
+    </li>
+    
       {/each}
     </ul>
   </div>
