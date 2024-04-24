@@ -131,6 +131,8 @@ function getTaskTypeIndicatorClass(taskType) {
       </select>
       <p class="block text-sm font-medium text-gray-700 mb-1">Task Description</p>
       <input class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500" type="text" bind:value={newTaskDescription} placeholder="Enter Description" />
+      <p class="block text-sm font-medium text-gray-700 mb-1">Task Due Date</p>
+      <input class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500" type="text" bind:value={newTaskDueDate} placeholder="Enter Due Date" />
       <p class="block text-sm font-medium text-gray-700 mb-1">Filter</p>
       <div class="mb-4">
         <button class="{filter === 'all' ? 'bg-blue-500 text-white focus:outline-none focus:ring focus:ring-blue-500' : 'bg-gray-100 text-gray-700 focus:outline-none focus:ring focus:ring-blue-500'} w-full px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = "all"}>All</button>
@@ -165,9 +167,11 @@ function getTaskTypeIndicatorClass(taskType) {
             <!-- Colored indicator based on task type -->
             <span class="{getTaskTypeIndicatorClass(task.task_type)} w-3 h-3 mr-2 rounded-full"></span>
             <span class="font-medium text-gray-700" class:line-through={task.completed}>
-                {task.task_name} {#if task.task_description} - {task.task_description} {/if} {#if task.task_due_date} - Due: {task.task_due_date}{/if}
+                {task.task_name} {#if task.task_description} - {task.task_description} {/if}             </span>
             </span>
-        </span>
+            {#if task.task_due_date}
+            <span class="text-gray-500 ml-4">Due: {task.task_due_date}</span>
+            {/if}
         <div>
             <button
                 class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded shadow-md mr-2"
