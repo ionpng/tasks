@@ -25,22 +25,24 @@
     }
     async function addTask() {
   if (newTask) {
-    const task = { 
+    let task = { 
       task_name: newTask, 
       task_type: newTaskType, 
-      description: newTaskDescription,
-      due_date: newTaskDueDate,
+      task_description: newTaskDescription,
+      task_due_date: newTaskDueDate,
       completed: false 
     };
+    console.log(task)
     tasks = [...tasks, task];
     newTask = "";
     newTaskDescription = "";
     newTaskDueDate = null;
-    await sendTask(task.task_name, task.task_type, task.description, task.due_date, uuid); 
+    await sendTask(task.task_name, task.task_type, task.task_description, task.task_due_date, uuid); 
     // Fetching tasks after addition
     fetchTasks(uuid).then(data => {
       if (data){
         tasks = data;
+        console.log(tasks)
       } 
     });
   }
@@ -146,7 +148,7 @@ function drop(index) {
       {#each filteredTasks as task, index (index)}
           <li class="flex justify-between items-center mb-2 bg-white p-4 rounded-lg shadow-md" draggable="true" on:dragstart={() => dragStart(index)} on:dragover={(e) => dragOver(e)} on:drop={() => drop(index)}>
             <span class="font-medium text-gray-700" class:line-through={task.completed}>
-              {task.task_name} ({task.task_type}) - {task.description} {#if task.due_date} - Due: {task.due_date}{/if}
+              {task.task_name} ({task.task_type}) {#if task.task_description} - {task.task_description} {/if} {#if task.task_due_date} - Due: {task.task_due_date}{/if}
             </span>
                 <div>
             <button
