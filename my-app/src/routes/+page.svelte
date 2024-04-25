@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { fetchTasks, sendTask, delTask } from '$lib/supabaseClient.js';
+  import { fetchTasks, sendTask, delTask, updateTaskCompletion } from '$lib/supabaseClient.js';
   import { v4 as uuidv4 } from 'uuid';
 
   let uuid = uuidv4();
@@ -30,14 +30,14 @@
       task_type: newTaskType, 
       task_description: newTaskDescription,
       task_due_date: newTaskDueDate,
-      completed: false 
+      task_completed: false
     };
     console.log(task)
     tasks = [...tasks, task];
     newTask = "";
     newTaskDescription = "";
     newTaskDueDate = null;
-    await sendTask(task.task_name, task.task_type, task.task_description, task.task_due_date, uuid); 
+    await sendTask(task.task_name, task.task_type, task.task_description, task.task_due_date, task.task_completed, uuid); 
     // Fetching tasks after addition
     fetchTasks(uuid).then(data => {
       if (data){
@@ -70,8 +70,15 @@ function drop(index) {
 }
 
 
-  function toggleComplete(index) {
-    tasks[index].completed = !tasks[index].completed;
+  async function toggleComplete(index) {
+    tasks[index].task_completed = !tasks[index].task_completed;
+    let task = tasks[index]
+    try{
+      await updateTaskCompletion(task.id, task.task_completed)
+      tasks[index] = task
+    }catch (error) {
+        console.error('Error updating task completion:', error);
+    }
   }
 
   async function deleteTask(index) {
@@ -166,7 +173,7 @@ function getTaskTypeIndicatorClass(taskType) {
         <span class="flex items-center">
             <!-- Colored indicator based on task type -->
             <span class="{getTaskTypeIndicatorClass(task.task_type)} w-3 h-3 mr-2 rounded-full"></span>
-            <span class="font-medium text-gray-700" class:line-through={task.completed}>
+            <span class="font-medium text-gray-700" class:line-through={task.task_completed}>
                 {task.task_name} {#if task.task_description} - {task.task_description} {/if}             </span>
             </span>
             {#if task.task_due_date}
@@ -177,7 +184,7 @@ function getTaskTypeIndicatorClass(taskType) {
                 class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded shadow-md mr-2"
                 on:click={() => toggleComplete(index)}
             >
-                {task.completed ? 'Undo' : 'Complete'}
+                {task.task_completed ? 'Undo' : 'Complete'}
             </button>
             <button
                 class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded shadow-md"

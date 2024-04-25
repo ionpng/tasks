@@ -5,7 +5,7 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-export async function sendTask(task, taskType, taskDescription, taskDueDate, uuid) {
+export async function sendTask(task, taskType, taskDescription, taskDueDate, task_completed, uuid) {
     const { data, error } = await supabase
       .from('tasks')
       .insert([
@@ -14,6 +14,7 @@ export async function sendTask(task, taskType, taskDescription, taskDueDate, uui
           task_type: taskType, 
           task_description: taskDescription,
           task_due_date: taskDueDate,
+          task_completed: task_completed,
           uuid: uuid 
         }
       ])
@@ -54,4 +55,24 @@ export async function delTask(id) {
   }
 
   return data;
+}
+
+export async function updateTaskCompletion(task_id, task_completed) {
+  try {
+      const { data, error } = await supabase
+          .from('tasks')
+          .update({ task_completed: task_completed })
+          .eq('id', task_id);
+
+      if (error) {
+          console.error('Error updating task completion:', error);
+          return null; // Return null if there's an error
+      } else {
+          console.log(data);
+          return data; // Return updated data if successful
+      }
+  } catch (error) {
+      console.error('Error updating task completion:', error);
+      return null; // Return null in case of any unexpected errors
+  }
 }
