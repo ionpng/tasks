@@ -7,6 +7,7 @@
   console.log(uuid)
   // existing code...
 
+  let originalTasks = []; // Store the original unfiltered list of tasks
   let tasks = [];
   let newTask = "";
   let newTaskType = "test"; // default task type
@@ -15,11 +16,16 @@
 
   let filter = "all"; // default filter
 
-  $: filteredTasks = filter === "all" ? tasks : tasks.filter(task => task.task_type === filter);
+  $: filteredTasks = filter === "all"
+    ? tasks.filter(task => !task.task_completed) // Only show incomplete tasks in "All"
+    : filter === "completed"
+        ? tasks.filter(task => task.task_completed) // Only show completed tasks in "Completed"
+        : tasks.filter(task => task.task_type === filter && !task.task_completed); // Show tasks of selected type that are not completed
   $: {
       fetchTasks(uuid).then(data => {
         if (data){
           tasks = data;
+          originalTasks = data.slice(); // Copy the fetched tasks to originalTasks
         } 
       });
     }
@@ -34,6 +40,7 @@
     };
     console.log(task)
     tasks = [...tasks, task];
+    originalTasks = [...originalTasks, task]; // Add task to the originalTasks list
     newTask = "";
     newTaskDescription = "";
     newTaskDueDate = null;
@@ -42,6 +49,7 @@
     fetchTasks(uuid).then(data => {
       if (data){
         tasks = data;
+        originalTasks = data.slice(); // Update originalTasks after fetching
         console.log(tasks)
       } 
     });
@@ -70,18 +78,23 @@ function drop(index) {
 }
 
 
-  async function toggleComplete(index) {
-    tasks[index].task_completed = !tasks[index].task_completed;
-    let task = tasks[index]
-    try{
-      await updateTaskCompletion(task.id, task.task_completed)
-      tasks[index] = task
-    }catch (error) {
+async function toggleComplete(taskId) {
+    const taskIndex = tasks.findIndex(task => task.id === taskId);
+    if (taskIndex === -1) {
+        console.error('Task not found');
+        return;
+    }
+
+    tasks[taskIndex].task_completed = !tasks[taskIndex].task_completed;
+
+    try {
+        await updateTaskCompletion(taskId, tasks[taskIndex].task_completed);
+    } catch (error) {
         console.error('Error updating task completion:', error);
     }
-  }
+}
 
-  async function deleteTask(index) {
+async function deleteTask(index) {
     if (index < 0 || index >= tasks.length) {
         console.error('Invalid index', index);
         return;
@@ -130,12 +143,6 @@ function getTaskTypeIndicatorClass(taskType) {
     <div class="px-6 py-4">
       <h1 class="text-xl font-bold text-gray-800 mb-4">Tasks</h1>
       <input class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500" type="text" bind:value={uuid} placeholder="Enter UUID" />
-      <p class="block text-sm font-medium text-gray-700 mb-1">Task Type</p>
-      <select bind:value={newTaskType} class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500">
-        <option value="test">Test</option>
-        <option value="homework">Homework</option>
-        <option value="project">Project</option>
-      </select>
       <p class="block text-sm font-medium text-gray-700 mb-1">Task Description</p>
       <input class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500" type="text" bind:value={newTaskDescription} placeholder="Enter Description" />
       <p class="block text-sm font-medium text-gray-700 mb-1">Task Due Date</p>
@@ -146,6 +153,8 @@ function getTaskTypeIndicatorClass(taskType) {
         <button class="{filter === 'test' ? 'bg-blue-500 text-white focus:outline-none focus:ring focus:ring-blue-500' : 'bg-gray-100 text-gray-700 focus:outline-none focus:ring focus:ring-blue-500'} w-full px-4 py-2 mt-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = "test"}>Tests</button>
         <button class="{filter === 'homework' ? 'bg-blue-500 text-white focus:outline-none focus:ring focus:ring-blue-500' : 'bg-gray-100 text-gray-700 focus:outline-none focus:ring focus:ring-blue-500'} w-full px-4 py-2 mt-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = "homework"}>Homework</button>
         <button class="{filter === 'project' ? 'bg-blue-500 text-white focus:outline-none focus:ring focus:ring-blue-500' : 'bg-gray-100 text-gray-700 focus:outline-none focus:ring focus:ring-blue-500'} w-full px-4 py-2 mt-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = "project"}>Projects</button>
+        <hr class="my-4 border-gray-300">
+        <button class="{filter === 'completed' ? 'bg-blue-500 text-white focus:outline-none focus:ring focus:ring-blue-500' : 'bg-gray-100 text-gray-700 focus:outline-none focus:ring focus:ring-blue-500'} w-full px-4 py-2 mt-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = "completed"}>Completed</button>
       </div>
     </div>
   </div>
@@ -167,7 +176,18 @@ function getTaskTypeIndicatorClass(taskType) {
         Add
       </button>
     </div>
-    <ul class="list-disc pl-5 mt-4">
+    <p class="block text-sm font-medium text-gray-700 mb-1">Task Type</p>
+    <select bind:value={newTaskType} class="w-1/6 mb-4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500 bg-white shadow-sm text-gray-900 appearance-none">
+      <option value="test" class="py-2 hover:bg-gray-100">Test</option>
+      <option value="homework" class="py-2 hover:bg-gray-100">Homework</option>
+      <option value="project" class="py-2 hover:bg-gray-100">Project</option>
+    </select>
+    
+    <style>
+      /* This style block is optional if you're using Tailwind CSS directly in your HTML */
+    </style>
+        
+        <ul class="list-disc pl-5 mt-4">
       {#each filteredTasks as task, index (index)}
       <li class="flex justify-between items-center mb-2 bg-white p-4 rounded-lg shadow-md" draggable="true" on:dragstart={() => dragStart(index)} on:dragover={(e) => dragOver(e)} on:drop={() => drop(index)}>
         <span class="flex items-center">
@@ -182,7 +202,7 @@ function getTaskTypeIndicatorClass(taskType) {
         <div>
             <button
                 class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded shadow-md mr-2"
-                on:click={() => toggleComplete(index)}
+                on:click={() => toggleComplete(task.id)}
             >
                 {task.task_completed ? 'Undo' : 'Complete'}
             </button>
