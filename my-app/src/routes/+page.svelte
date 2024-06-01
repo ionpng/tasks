@@ -1,12 +1,23 @@
 <script>
   import { onMount } from 'svelte';
   import { fetchTasks, sendTask, delTask, updateTaskCompletion } from '$lib/supabaseClient.js';
-  import { v4 as uuidv4 } from 'uuid';
 
-  let uuid = uuidv4();
-  console.log(uuid)
-  // existing code...
+  let uuid;
 
+  async function getIPAddress() {
+    try {
+      const response = await fetch('https://api.ipify.org?format=json');
+      const data = await response.json();
+      uuid = data.ip;
+    } catch (error) {
+      console.error('Error fetching IP address:', error);
+    }
+  }
+
+  onMount(() => {
+    getIPAddress();
+  });
+  
   let originalTasks = []; // Store the original unfiltered list of tasks
   let tasks = [];
   let newTask = "";
@@ -134,87 +145,89 @@ function getTaskTypeIndicatorClass(taskType) {
             return 'bg-gray-500'; // Default color if task type is not recognized
     }
 }
-
 </script>
 
-<div class="flex h-screen bg-gray-100">
+<div class="flex h-screen bg-gray-50">
   <!-- Sidebar -->
-  <div class="w-64 bg-white shadow-md">
-    <div class="px-6 py-4">
-      <h1 class="text-xl font-bold text-gray-800 mb-4">Tasks</h1>
-      <input class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500" type="text" bind:value={uuid} placeholder="Enter UUID" />
-      <p class="block text-sm font-medium text-gray-700 mb-1">Task Description</p>
-      <input class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500" type="text" bind:value={newTaskDescription} placeholder="Enter Description" />
-      <p class="block text-sm font-medium text-gray-700 mb-1">Task Due Date</p>
-      <input class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500" type="text" bind:value={newTaskDueDate} placeholder="Enter Due Date" />
-      <p class="block text-sm font-medium text-gray-700 mb-1">Filter</p>
+  <div class="w-64 bg-white shadow-lg">
+    <div class="px-6 py-6">
+      <h1 class="text-2xl font-semibold text-gray-900 mb-6">Tasks</h1>
       <div class="mb-4">
-        <button class="{filter === 'all' ? 'bg-blue-500 text-white focus:outline-none focus:ring focus:ring-blue-500' : 'bg-gray-100 text-gray-700 focus:outline-none focus:ring focus:ring-blue-500'} w-full px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = "all"}>All</button>
-        <button class="{filter === 'test' ? 'bg-blue-500 text-white focus:outline-none focus:ring focus:ring-blue-500' : 'bg-gray-100 text-gray-700 focus:outline-none focus:ring focus:ring-blue-500'} w-full px-4 py-2 mt-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = "test"}>Tests</button>
-        <button class="{filter === 'homework' ? 'bg-blue-500 text-white focus:outline-none focus:ring focus:ring-blue-500' : 'bg-gray-100 text-gray-700 focus:outline-none focus:ring focus:ring-blue-500'} w-full px-4 py-2 mt-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = "homework"}>Homework</button>
-        <button class="{filter === 'project' ? 'bg-blue-500 text-white focus:outline-none focus:ring focus:ring-blue-500' : 'bg-gray-100 text-gray-700 focus:outline-none focus:ring focus:ring-blue-500'} w-full px-4 py-2 mt-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = "project"}>Projects</button>
-        <hr class="my-4 border-gray-300">
-        <button class="{filter === 'completed' ? 'bg-blue-500 text-white focus:outline-none focus:ring focus:ring-blue-500' : 'bg-gray-100 text-gray-700 focus:outline-none focus:ring focus:ring-blue-500'} w-full px-4 py-2 mt-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = "completed"}>Completed</button>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Task Description</label>
+        <input class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" type="text" bind:value={newTaskDescription} placeholder="Enter Description" />
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Task Due Date</label>
+        <input class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" type="text" bind:value={newTaskDueDate} placeholder="Enter Due Date" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Filter</label>
+        <div class="space-y-2">
+          <button class="{filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'} w-full px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = 'all'}>All</button>
+          <button class="{filter === 'test' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'} w-full px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = 'test'}>Tests</button>
+          <button class="{filter === 'homework' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'} w-full px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = 'homework'}>Homework</button>
+          <button class="{filter === 'project' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'} w-full px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = 'project'}>Projects</button>
+          <hr class="my-4 border-gray-300">
+          <button class="{filter === 'completed' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'} w-full px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => filter = 'completed'}>Completed</button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Main Content Area -->
-  <div class="flex-1 overflow-y-auto p-4">
-    <div class="flex items-center mb-4">
+  <div class="flex-1 overflow-y-auto p-8 bg-gray-50">
+    <div class="flex items-center mb-6 space-x-4">
       <input
-        class="border border-gray-300 bg-white h-10 px-5 pr-16 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md flex-1"
+        class="border border-gray-300 bg-white h-12 px-5 pr-16 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm flex-1"
         type="text"
         placeholder="Add a task"
         bind:value={newTask}
         on:keydown={(e) => e.key === 'Enter' && addTask()}
       />
-        <button
-        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2 shadow-md"
+      <button
+        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow-md"
         on:click={addTask}
       >
         Add
       </button>
     </div>
-    <p class="block text-sm font-medium text-gray-700 mb-1">Task Type</p>
-    <select bind:value={newTaskType} class="w-1/6 mb-4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500 bg-white shadow-sm text-gray-900 appearance-none">
-      <option value="test" class="py-2 hover:bg-gray-100">Test</option>
-      <option value="homework" class="py-2 hover:bg-gray-100">Homework</option>
-      <option value="project" class="py-2 hover:bg-gray-100">Project</option>
-    </select>
+    <div class="mb-6">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Task Type</label>
+      <select bind:value={newTaskType} class="w-1/4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm text-gray-900 appearance-none">
+        <option value="test" class="py-2 hover:bg-gray-100">Test</option>
+        <option value="homework" class="py-2 hover:bg-gray-100">Homework</option>
+        <option value="project" class="py-2 hover:bg-gray-100">Project</option>
+      </select>
+    </div>
     
-    <style>
-      /* This style block is optional if you're using Tailwind CSS directly in your HTML */
-    </style>
-        
-        <ul class="list-disc pl-5 mt-4">
+    <ul class="space-y-4">
       {#each filteredTasks as task, index (index)}
-      <li class="flex justify-between items-center mb-2 bg-white p-4 rounded-lg shadow-md" draggable="true" on:dragstart={() => dragStart(index)} on:dragover={(e) => dragOver(e)} on:drop={() => drop(index)}>
+      <li class="flex justify-between items-center bg-white p-4 rounded-lg shadow-md" draggable="true" on:dragstart={() => dragStart(index)} on:dragover={(e) => dragOver(e)} on:drop={() => drop(index)}>
         <span class="flex items-center">
-            <!-- Colored indicator based on task type -->
-            <span class="{getTaskTypeIndicatorClass(task.task_type)} w-3 h-3 mr-2 rounded-full"></span>
-            <span class="font-medium text-gray-700" class:line-through={task.task_completed}>
-                {task.task_name} {#if task.task_description} - {task.task_description} {/if}             </span>
-            </span>
-            {#if task.task_due_date}
-            <span class="text-gray-500 ml-4">Due: {task.task_due_date}</span>
-            {/if}
+          <!-- Colored indicator based on task type -->
+          <span class="{getTaskTypeIndicatorClass(task.task_type)} w-4 h-4 mr-3 rounded-full"></span>
+          <span class="font-medium text-gray-800" class:line-through={task.task_completed}>
+            {task.task_name} {#if task.task_description} - {task.task_description} {/if}
+          </span>
+        </span>
+        {#if task.task_due_date}
+        <span class="text-gray-500 ml-4">Due: {task.task_due_date}</span>
+        {/if}
         <div>
-            <button
-                class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded shadow-md mr-2"
-                on:click={() => toggleComplete(task.id)}
-            >
-                {task.task_completed ? 'Undo' : 'Complete'}
-            </button>
-            <button
-                class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded shadow-md"
-                on:click={() => deleteTask(index)}
-            >
-                Delete
-            </button>
+          <button
+            class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded shadow-md mr-2"
+            on:click={() => toggleComplete(task.id)}
+          >
+            {task.task_completed ? 'Undo' : 'Complete'}
+          </button>
+          <button
+            class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded shadow-md"
+            on:click={() => deleteTask(index)}
+          >
+            Delete
+          </button>
         </div>
-    </li>
-    
+      </li>
       {/each}
     </ul>
   </div>
