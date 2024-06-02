@@ -1,8 +1,10 @@
 <script>
   import { onMount } from 'svelte';
   import { fetchTasks, sendTask, delTask, updateTaskCompletion } from '$lib/supabaseClient.js';
-
+  import Edit from '$lib/components/Edit.svelte'
   let uuid;
+  let isEditing;
+  let editTask;
 
   async function getIPAddress() {
     try {
@@ -149,6 +151,26 @@ function getTaskTypeIndicatorClass(taskType) {
 
 <div class="flex h-screen bg-gray-50">
   <!-- Sidebar -->
+  {#if isEditing}
+	<button class="z-10 fixed flex h-screen w-screen items-center justify-center"
+	on:click={() => {
+		isEditing = false
+    editTask = null
+    fetchTasks(uuid).then(data => {
+      if (data){
+        tasks = data;
+        originalTasks = data.slice(); // Update originalTasks after fetching
+        console.log(tasks)
+      } 
+    });
+	}}>
+		<button on:click|stopPropagation>
+			<Edit {editTask}/>
+		</button>
+	</button>
+
+	{/if}
+
   <div class="w-64 bg-white shadow-lg">
     <div class="px-6 py-6">
       <h1 class="text-2xl font-semibold text-gray-900 mb-6">Tasks</h1>
@@ -220,6 +242,16 @@ function getTaskTypeIndicatorClass(taskType) {
           >
             {task.task_completed ? 'Undo' : 'Complete'}
           </button>
+          <button
+          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded shadow-md"
+          on:click={() => {
+            isEditing = true;
+            editTask = task;
+          }}
+        >
+          Edit
+        </button>
+                  
           <button
             class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded shadow-md"
             on:click={() => deleteTask(index)}

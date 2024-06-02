@@ -76,3 +76,16 @@ export async function updateTaskCompletion(task_id, task_completed) {
       return null; // Return null in case of any unexpected errors
   }
 }
+
+export async function saveChanges(editedTask) {
+    const { data, error } = await supabase
+      .from('tasks')
+      .update(editedTask)
+      .match({ id: editedTask.id });
+
+    if (error) {
+      console.error('Error updating task:', error.message);
+    } else {
+      console.log('Task updated successfully:', data);
+    }
+  }
