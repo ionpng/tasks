@@ -34,7 +34,6 @@ export async function sendTask(task, taskType, taskDescription, taskDueDate, tas
             console.error('Error fetching tasks:', error);
             return null; // Return null if there's an error
         } else {
-            console.log(data)
             return data; // Return data if fetched successfully
         }
     } catch (error) {
@@ -89,3 +88,61 @@ export async function saveChanges(editedTask) {
       console.log('Task updated successfully:', data);
     }
   }
+
+export async function addFilter(uuid, filter_name, filter_color) {
+  const { data, error } = await supabase
+    .from('tasks_filters')
+    .insert([
+      { 
+        uuid: uuid,
+        filter_name: filter_name,
+        filter_color: filter_color
+      }
+    ])
+
+  if (error) console.error('Error sending task:', error)
+  else return data
+}
+
+export async function fetchFilters(uuid) {
+  try {
+      const { data, error } = await supabase
+          .from('tasks_filters')
+          .select('*')
+          .eq('uuid', uuid);
+
+      if (error) {
+          console.error('Error fetching tasks:', error);
+          return null; // Return null if there's an error
+      } else {
+          return data; // Return data if fetched successfully
+      }
+  } catch (error) {
+      console.error('Error fetching tasks:', error);
+      return null; // Return null in case of any unexpected errors
+  }
+}
+
+export async function getFilterColor(filterName, uuid) {
+  try {
+      const { data, error } = await supabase
+          .from('tasks_filters')
+          .select('filter_color')
+          .eq('filter_name', filterName)
+          .eq('uuid', uuid)
+          .single(); // Assuming each filter_name is unique
+
+      if (error) {
+          console.error('Error fetching filter color:', error);
+          return null; // Return null if there's an error
+      } else if (data) {
+          return data.filter_color; // Return filter_color if found
+      } else {
+          console.error('Filter not found:', filterName);
+          return null; // Return null if filter not found
+      }
+  } catch (error) {
+      console.error('Error fetching filter color:', error);
+      return null; // Return null in case of any unexpected errors
+  }
+}
