@@ -146,3 +146,18 @@ export async function getFilterColor(filterName, uuid) {
       return null; // Return null in case of any unexpected errors
   }
 }
+
+export async function delTaskFilter(uuid, filter_name) {
+  let { data, error } = await supabase
+      .from('tasks_filters')
+      .delete()
+      .eq('uuid', uuid)
+      .eq('filter_name', filter_name);
+
+  if (error) {
+      console.error('Error deleting task filter:', error.message);
+      return null;
+  }
+
+  return data;
+}

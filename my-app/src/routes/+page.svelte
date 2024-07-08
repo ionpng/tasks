@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { fetchTasks, getFilterColor, fetchFilters, sendTask, delTask, updateTaskCompletion } from '$lib/supabaseClient.js';
+  import { delTaskFilter, fetchTasks, getFilterColor, fetchFilters, sendTask, delTask, updateTaskCompletion } from '$lib/supabaseClient.js';
   import Edit from '$lib/components/Edit.svelte'
   import AddFilter from '$lib/components/AddFilter.svelte';
 
@@ -33,21 +33,6 @@
   let filters = [];
   let addFilter = false;
 
-  const colorMap = {
-    green: 'green',
-    pink: 'pink',
-    blue: 'blue',
-    yellow: 'yellow',
-    orange: 'orange',
-    purple: 'purple',
-    red: 'red',
-    teal: 'teal',
-    cyan: 'cyan',
-    grey: 'grey',
-    indigo: 'indigo',
-    brown: 'brown',
-  };
-
   $: filteredTasks = activeFilter === "all"
     ? tasks.filter(task => !task.task_completed)
     : activeFilter === "completed"
@@ -65,7 +50,7 @@
       });
     }
   }
-
+  
   async function updateTaskTypeColors() {
     const promises = tasks.map(async task => {
       if (!taskTypeColors[task.task_type]) {
@@ -186,6 +171,41 @@
       console.error('Error deleting task:', error);
     }
   }
+
+  function deleteTaskFilter(uuid, filterName) {
+    // Your delete filter logic here
+    delTaskFilter(uuid, filterName)
+    console.log(`Deleting filter: ${filterName} with UUID: ${uuid}`);
+    fetchFilters(uuid).then(data => {
+      if (data) {
+        filters = data;
+        filters = data.slice();
+        // Update newTaskType based on available filters
+        if (!filters.includes(newTaskType)) {
+          newTaskType = filters[0]; // Set default task type to the first available filter
+        }
+      }
+    })
+
+  }
+
+  // Function to handle mouse enter event
+  function handleMouseEnter(filter) {
+    filter.hoverTimeout = setTimeout(() => {
+      filter.showDeleteButton = true;
+    }, 100);
+  }
+
+  // Function to handle mouse leave event
+  function handleMouseLeave(filter) {
+    clearTimeout(filter.hoverTimeout);
+    filter.showDeleteButton = false;
+  }
+
+  function multipledel(uuid, filter_name) {
+    deleteTaskFilter(uuid, filter_name)
+    deleteTaskFilter(uuid, filter_name)
+  }
 </script>
 
 <div class="flex h-screen bg-gray-50">
@@ -240,13 +260,28 @@
         <div class="space-y-2">
           <button class="{activeFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'} w-full px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => activeFilter = 'all'}>All</button>
           {#each filters as filter}
+          <div 
+            class="relative"
+            on:mouseenter={() => handleMouseEnter(filter)}
+            on:mouseleave={() => handleMouseLeave(filter)}
+          >
             <button 
               class="{filter === activeFilter ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'} w-full px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-200" 
               on:click={() => activeFilter = filter}
             >
               {filter.filter_name}
             </button>
-          {/each}
+            {#if filter.showDeleteButton}
+              <button 
+                class="absolute right-0 top-0 {filter === activeFilter ? 'bg-red-400 text-white' : 'bg-gray-100 text-gray-700'} w-6 h-6 flex items-center justify-center rounded-md hover:bg-red-800"
+                on:click={() => multipledel(filter.uuid, filter.filter_name) }
+              >
+                x
+              </button>
+            {/if}
+          </div>
+          {/each}         
+
           <hr class="my-4 border-gray-300">
           <button class="{activeFilter === 'completed' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'} w-full px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-200" on:click={() => activeFilter = 'completed'}>
 
