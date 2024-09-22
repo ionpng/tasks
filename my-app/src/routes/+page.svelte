@@ -231,7 +231,7 @@
     deleteTaskFilter(uuid, filter_name);
   }
 </script>
-<div class="flex h-screen bg-gray-50">
+<div class="flex h-screen w-[100vw] bg-gray-50">
   <!-- Sidebar -->
   {#if isEditing}
   <div class="z-20 fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
@@ -257,7 +257,7 @@
   {/if}
 
   <!-- Sidebar -->
-  <div class="w-64 bg-white shadow-xl rounded-lg p-4">
+  <div class="w-[15vw] bg-white shadow-xl rounded-lg p-4">
     <h1 class="text-2xl font-semibold text-gray-900 mb-6">Tasks</h1>
     <button class="bg-black text-white w-full px-4 py-2 rounded-lg transition duration-300 ease-in-out hover:bg-white hover:text-black border border-black" on:click={() => addFilters=true}
 
@@ -305,7 +305,7 @@
     </div>
   </div>
   <!-- Main Content Area -->
-  <div class="flex-1 overflow-y-auto p-8 bg-gray-50">
+  <div class="flex-1 overflow-y-auto p-8 bg-gray-50 w-[85vw]">
     <div class="flex items-center mb-6 space-x-4">
       <input
         class="border border-gray-200 bg-gray-50 h-12 px-5 pr-16 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm transition duration-200 flex-1"
