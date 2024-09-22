@@ -1,14 +1,20 @@
 <script>
     import { addFilter } from '$lib/supabaseClient.js';
     export let uuid; // Task object to edit
+    export let addFilters
     let filter_name;
     let filter_color
+
+    function completeAdd(uuid, filter_name, filter_color){
+      addFilter(uuid, filter_name, filter_color)
+      addFilters=false
+    }
   </script>
   
   <div class="flex flex-col bg-white rounded shadow-md max-w-3xl mx-auto px-20 py-16">
     <h2 class="text-2xl font-bold text-gray-900 mb-8">Add Filter</h2>
   
-    <form on:submit|preventDefault={addFilter(uuid, filter_name, filter_color)}>
+    <form on:submit|preventDefault={completeAdd(uuid, filter_name, filter_color)}>
       <div class="flex flex-col space-y-8">
         <div class="flex items-center">
           <label for="task_name" class="w-1/3 text-base text-gray-700 mr-4">Filter Name</label>

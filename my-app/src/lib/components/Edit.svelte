@@ -1,14 +1,21 @@
 <script>
   import { saveChanges } from '$lib/supabaseClient.js';
   export let editTask; // Task object to edit
+  export let isEditing;
   console.log(editTask);
   let editedTask = { ...editTask }; // Clone the task object
+
+  function completeSave(task){
+    saveChanges(task)
+    isEditing = false
+  }
+
 </script>
 
 <div class="flex flex-col bg-white rounded shadow-md max-w-3xl mx-auto px-20 py-16">
   <h2 class="text-2xl font-bold text-gray-900 mb-8">Edit Task</h2>
 
-  <form on:submit|preventDefault={saveChanges(editedTask)}>
+  <form on:submit|preventDefault={completeSave(editedTask)}>
     <div class="flex flex-col space-y-8">
       <div class="flex items-center">
         <label for="task_name" class="w-1/3 text-base text-gray-700 mr-4">Task Name</label>

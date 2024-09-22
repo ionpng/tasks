@@ -18,11 +18,19 @@
   let newTaskType = "test";
   let newTaskDescription = "";
   let newTaskDueDate = null;
-  let newTaskPoints = null;
+  let newTaskPoints = 0;
 
   let originalFilters = [];
   let filters = [];
-  let addFilter = false;
+  let addFilters = false;
+
+  let isDarkMode = false; // State for dark mode toggle
+  
+  // Add this function to toggle dark mode
+  function toggleDarkMode() {
+    isDarkMode = !isDarkMode;
+    document.documentElement.classList.toggle('dark', isDarkMode); // Toggle 'dark' class on the HTML element
+  }
 
   // Filter and sort logic
   $: filteredTasks = activeFilter === "all"
@@ -65,7 +73,22 @@
     });
     await Promise.all(promises);
   }
-
+  $: fetchTasks(uuid).then(data => {
+        if (data) {
+          tasks = data;
+          originalTasks = data.slice();
+          updateTaskTypeColors();
+        }
+      });
+      fetchFilters(uuid).then(data => {
+        if (data) {
+          filters = data;
+          originalFilters = data.slice();
+          if (!filters.includes(newTaskType)) {
+            newTaskType = filters[0];
+          }
+        }
+      });
   onMount(async () => {
     const ipData = await getIPAddress(); // Wait for IP address before using uuid
     if (ipData) {
@@ -212,15 +235,23 @@
   <!-- Sidebar -->
   {#if isEditing}
   <div class="z-20 fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+    <button class="z-10 fixed flex h-screen w-screen items-center justify-center"
+		on:click={() => {
+      isEditing=false
+		}}>
     <div on:click|stopPropagation class="bg-white rounded-xl shadow-lg p-6">
-      <Edit {editTask} />
+      <Edit {editTask} bind:isEditing={isEditing}/>
     </div>
   </div>
   {/if}
-  {#if addFilter}
+  {#if addFilters}
   <div class="z-20 fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+    <button class="z-10 fixed flex h-screen w-screen items-center justify-center"
+		on:click={() => {
+      addFilters=false
+		}}>
     <div on:click|stopPropagation class="bg-white rounded-xl shadow-lg p-6">
-      <AddFilter {uuid} />
+      <AddFilter {uuid} bind:addFilters={addFilters}/>
     </div>
   </div>
   {/if}
@@ -228,7 +259,9 @@
   <!-- Sidebar -->
   <div class="w-64 bg-white shadow-xl rounded-lg p-4">
     <h1 class="text-2xl font-semibold text-gray-900 mb-6">Tasks</h1>
-    <button class="bg-black text-white w-full px-4 py-2 rounded-lg transition duration-300 ease-in-out hover:bg-white hover:text-black border border-black">
+    <button class="bg-black text-white w-full px-4 py-2 rounded-lg transition duration-300 ease-in-out hover:bg-white hover:text-black border border-black" on:click={() => addFilters=true}
+
+    >
       Add Filter
     </button>
 
@@ -250,8 +283,7 @@
           >
             {filter.filter_name}
           </button>
-
-          {#if filter.showDeleteButton}
+          {#if filter == activeFilter}
           <button 
             class="absolute right-2 top-2 bg-red-500 text-white w-6 h-6 flex items-center justify-center rounded-full transition duration-300 ease-in-out hover:bg-red-800"
             on:click={() => multipledel(filter.uuid, filter.filter_name)}
@@ -288,9 +320,6 @@
       >
         Add
       </button>
-    </div>
-    
-    <div class="flex items-center mb-6 space-x-4">
       <label class="text-sm font-medium text-gray-700">Sort by:</label>
       <select bind:value={sortOption} class="ml-2 border-gray-300 rounded-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white shadow-sm transition duration-200">
         <option value="none">None</option> <!-- Added "None" option -->
@@ -298,6 +327,9 @@
         <option value="dueDate">Due Date</option>
         <option value="filter">Task Type</option>
       </select>
+    </div>
+    
+    <div class="flex items-center mb-6 space-x-4">
           
       <label class="text-sm font-medium text-gray-700 ml-8">Task Type</label>
       <select bind:value={newTaskType} class="w-1/4 px-3 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white shadow-sm transition duration-200 text-gray-900">
