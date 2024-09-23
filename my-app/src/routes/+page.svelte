@@ -3,6 +3,7 @@
   import { delTaskFilter, fetchTasks, getFilterColor, fetchFilters, sendTask, delTask, updateTaskCompletion } from '$lib/supabaseClient.js';
   import Edit from '$lib/components/Edit.svelte';
   import AddFilter from '$lib/components/AddFilter.svelte';
+  import {SunIcon, MoonIcon, MenuIcon} from "svelte-feather-icons";
 
   let uuid;
   let isEditing = false;
@@ -18,7 +19,7 @@
   let newTaskType = "test";
   let newTaskDescription = "";
   let newTaskDueDate = null;
-  let newTaskPoints = 0;
+  let newTaskPoints = null;
 
   let originalFilters = [];
   let filters = [];
@@ -31,6 +32,21 @@
     isDarkMode = !isDarkMode;
     document.documentElement.classList.toggle('dark', isDarkMode); // Toggle 'dark' class on the HTML element
   }
+
+  let isMobile = false;
+  let sidebarOpen = false;
+
+  const checkIfMobile = () => {
+        isMobile = window.innerWidth <= 768;
+    };
+
+  function toggleSidebar() {
+    sidebarOpen = !sidebarOpen
+  }
+  // Run on component mount
+  onMount(() => {
+      checkIfMobile();
+  });
 
   // Filter and sort logic
   $: filteredTasks = activeFilter === "all"
@@ -231,7 +247,7 @@
     deleteTaskFilter(uuid, filter_name);
   }
 </script>
-<div class="flex h-screen w-[100vw] bg-gray-50">
+<div class="flex h-screen w-[100vw] {isDarkMode ? "bg-gray-950":"bg-gray-50"}">
   <!-- Sidebar -->
   {#if isEditing}
   <div class="z-20 fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
@@ -257,9 +273,10 @@
   {/if}
 
   <!-- Sidebar -->
-  <div class="w-[15vw] bg-white shadow-xl rounded-lg p-4">
-    <h1 class="text-2xl font-semibold text-gray-900 mb-6">Tasks</h1>
-    <button class="bg-black text-white w-full px-4 py-2 rounded-lg transition duration-300 ease-in-out hover:bg-white hover:text-black border border-black" on:click={() => addFilters=true}
+  {#if !isMobile}
+  <div class="${isMobile ? "" : "w-[100vw]"} ${isDarkMode ? "bg-black text-white":"bg-white text-black"} shadow-xl rounded-lg p-4">
+    <h1 class="text-2xl font-semibold ${isDarkMode ? "text-white" : "text-gray-900"} mb-6">Tasks</h1>
+    <button class="bg-black text-white w-full px-4 py-2 rounded-lg transition duration-300 ease-in-out ${ isDarkMode ? "hover:bg-black hover:text-white border border-white" : "hover:bg-white hover:text-black border border-black"}" on:click={() => addFilters=true}
 
     >
       Add Filter
@@ -267,15 +284,24 @@
 
     <label class="block text-sm font-medium text-gray-700 mt-4 mb-1">Filter</label>
     <div class="space-y-2">
+      {#if isDarkMode}
+      <button 
+        class="{activeFilter === 'all' ? 'bg-blue-300 text-black' : 'bg-black text-white'} w-full px-4 py-2 rounded-lg transition duration-300 ease-in-out hover:bg-gray-800"
+        on:click={() => activeFilter = 'all'}
+      >
+        All
+      </button>
+      {:else}
       <button 
         class="{activeFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'} w-full px-4 py-2 rounded-lg transition duration-300 ease-in-out hover:bg-gray-200"
         on:click={() => activeFilter = 'all'}
       >
         All
       </button>
+      {/if}
 
       {#each filters as filter}
-        <div class="relative">
+        <div class="relative ${isDarkMode ? "text-white" : "text-black"}">
           <button
             class="w-full px-4 py-2 rounded-lg transition duration-300 ease-in-out hover:bg-gray-200"
             style="background-color: {taskTypeColors[filter.filter_name] || '#f3f4f6'}; color: {filter === activeFilter ? 'white' : 'black'}"
@@ -295,62 +321,88 @@
       {/each}
 
       <hr class="my-4 border-gray-300">
-
-      <button 
-        class="{activeFilter === 'completed' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'} w-full px-4 py-2 rounded-lg transition duration-300 ease-in-out hover:bg-gray-200"
+      {#if isDarkMode}
+        <button 
+        class="{activeFilter === 'completed' ? 'bg-blue-300 text-black' : 'bg-black text-white'} w-full px-4 py-2 rounded-lg transition duration-300 ease-in-out hover:bg-gray-800"
         on:click={() => activeFilter = 'completed'}
       >
         Completed
       </button>
+      {:else}
+        <button 
+          class="{activeFilter === 'completed' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'} w-full px-4 py-2 rounded-lg transition duration-300 ease-in-out hover:bg-gray-200"
+          on:click={() => activeFilter = 'completed'}
+        >
+          Completed
+        </button>
+      {/if}
     </div>
+    <div class="fixed bottom-4 left-4">
+      <button class="w-8 h-8 p-0" variant="ghost" on:click={() => toggleDarkMode()}>
+        {#if isDarkMode}
+          <SunIcon></SunIcon>
+        {:else}
+          <MoonIcon></MoonIcon>
+        {/if}
+      </button>
+    </div>    
   </div>
+  {/if}
   <!-- Main Content Area -->
-  <div class="flex-1 overflow-y-auto p-8 bg-gray-50 w-[85vw]">
+  <div class="flex-1 overflow-y-auto p-8  ${isDarkMode ? "bg-black" : "bg-gray-50"} ${isMobile ? "w-[100vw]": "w-[85vw]"}">
+    <div class="flex items-center mb-6 space-x-4">
+    {#if isMobile}
+    <button class="w-8 h-8 p-0" variant="ghost"  on:click={() => toggleSidebar()}>
+      <MenuIcon></MenuIcon>
+    </button>
+    {/if}
+    <label class="text-sm font-medium text-gray-700">Sort by:</label>
+    <select bind:value={sortOption} class="${isDarkMode ?" bg-gray-950 text-white" : "bg-gray-50 text-black"} px-3 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm transition duration-200 text-gray-900">
+      <option value="none">None</option> <!-- Added "None" option -->
+      <option value="alphabetical">Alphabetical</option>
+      <option value="dueDate">Due Date</option>
+      <option value="filter">Task Type</option>
+    </select>
+
+    </div>
     <div class="flex items-center mb-6 space-x-4">
       <input
-        class="border border-gray-200 bg-gray-50 h-12 px-5 pr-16 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm transition duration-200 flex-1"
+        class="border border-gray-200 ${isDarkMode ?" bg-gray-950" : "bg-gray-50"} h-12 px-5 pr-16 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm transition duration-200 flex-1"
         type="text"
         placeholder="Add a task"
         bind:value={newTask}
         on:keydown={(e) => e.key === 'Enter' && addTask()}
       />
       <button
-        class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-6 rounded-full shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        class="font-medium py-2 px-6 rounded-full shadow-md transition duration-200 focus:outline-none focus:ring-2 {isDarkMode ? "bg-blue-500 hover:bg-blue-400 text-black focus:ring-blue-600" : "bg-blue-500 hover:bg-blue-600 text-white focus:ring-blue-400"}"
         on:click={addTask}
       >
         Add
       </button>
-      <label class="text-sm font-medium text-gray-700">Sort by:</label>
-      <select bind:value={sortOption} class="ml-2 border-gray-300 rounded-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white shadow-sm transition duration-200">
-        <option value="none">None</option> <!-- Added "None" option -->
-        <option value="alphabetical">Alphabetical</option>
-        <option value="dueDate">Due Date</option>
-        <option value="filter">Task Type</option>
-      </select>
     </div>
     
-    <div class="flex items-center mb-6 space-x-4">
+    <div class="mb-6 space-x-4">
           
-      <label class="text-sm font-medium text-gray-700 ml-8">Task Type</label>
-      <select bind:value={newTaskType} class="w-1/4 px-3 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white shadow-sm transition duration-200 text-gray-900">
+      <label class="text-sm font-medium text-gray-700 ml-8">Type</label>
+      <select bind:value={newTaskType} class="${isMobile ? "w-[90vw]" : "w-1/4"} {isDarkMode ?" bg-gray-950 text-white" : "bg-gray-50 text-black"} px-3 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm transition duration-200 text-gray-900">
         {#each filters as filter}
           <option value={filter} class="py-2 hover:bg-gray-100">{filter.filter_name}</option>
         {/each}
       </select>
     
-      <label class="text-sm font-medium text-gray-700 ml-8">Task Due Date</label>
-      <input class="w-1/4 px-3 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50 shadow-sm transition duration-200" type="text" bind:value={newTaskDueDate} placeholder="Enter Due Date" />
+      <label class="text-sm font-medium text-gray-700 ml-8">Due Date</label>
+      <input class=" ${isMobile ? "w-[90vw]" : "w-1/4"}{isDarkMode ?" bg-gray-950" : "bg-gray-50"} px-3 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400  shadow-sm transition duration-200" type="text" bind:value={newTaskDueDate} placeholder="Enter Due Date" />
       
-      <label class="text-sm font-medium text-gray-700 ml-8">Task Description</label>
-      <input class="w-1/4 px-3 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50 shadow-sm transition duration-200" type="text" bind:value={newTaskDescription} placeholder="Enter Description" />
+      <label class="text-sm font-medium text-gray-700 ml-8">Description</label>
+      <input class="${isMobile ? "w-[90vw]" : "w-1/4"} {isDarkMode ?" bg-gray-950" : "bg-gray-50"} px-3 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400  shadow-sm transition duration-200" type="text" bind:value={newTaskDescription} placeholder="Enter Description" />
       
-      <label class="text-sm font-medium text-gray-700 ml-8">Task Points</label>
-      <input type="number" class="w-1/4 px-3 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50 shadow-sm transition duration-200" bind:value={newTaskPoints} placeholder="Enter Task Points" />
+      <label class="text-sm font-medium text-gray-700 ml-8">Points</label>
+      <input type="number" class="${isMobile ? "w-[90vw]" : "w-1/4"} {isDarkMode ?" bg-gray-950" : "bg-gray-50"} px-3 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400  shadow-sm transition duration-200" bind:value={newTaskPoints} placeholder="Enter Task Points" />
     </div>
         <ul class="space-y-4">
           {#each filteredTasks as task, index (index)}
           <li 
-            class="flex justify-between items-center bg-white p-4 rounded-lg shadow-lg mb-4 transition duration-300 ease-in-out hover:shadow-xl" 
+            class=" ${isMobile ? "w-[100vw]" : "" } flex justify-between items-center p-4 rounded-lg shadow-lg mb-4 transition duration-300 ease-in-out hover:shadow-xl {isDarkMode? "bg-black" : "bg-white"}" 
             draggable="true" 
             on:dragstart={() => dragStart(index)} 
             on:dragover={(e) => dragOver(e)} 
@@ -361,7 +413,7 @@
             
             <!-- Task name, description, and points -->
             <div class="flex-1">
-              <span class="font-bold text-gray-900 block">{task.task_name} {#if task.task_points} ({task.task_points} pts) {/if}</span>
+              <span class="font-bold block {isDarkMode? "text-gray-100":"text-gray-900"}">{task.task_name} {#if task.task_points} ({task.task_points} pts) {/if}</span>
               <span class="text-sm text-gray-600 block">{task.task_description}</span>
             </div>
         
@@ -373,21 +425,21 @@
             <!-- Action buttons -->
             <div class="flex items-center space-x-2">
               <button 
-                class="bg-green-500 hover:bg-green-600 active:scale-95 text-white font-medium py-1 px-3 rounded-lg shadow-md transition duration-300 ease-in-out"
+                class="bg-green-500 hover:bg-green-600 active:scale-95 font-medium py-1 px-3 rounded-lg shadow-md transition duration-300 ease-in-out {isDarkMode ? "text-black" : "text-white"}"
                 on:click={() => toggleComplete(task.id)}
               >
                 {task.task_completed ? 'Undo' : 'Complete'}
               </button>
         
               <button 
-                class="bg-blue-500 hover:bg-blue-600 active:scale-95 text-white font-medium py-1 px-3 rounded-lg shadow-md transition duration-300 ease-in-out"
+                class="bg-blue-500 hover:bg-blue-600 active:scale-95 font-medium py-1 px-3 rounded-lg shadow-md transition duration-300 ease-in-out {isDarkMode ? "text-black" : "text-white"}"
                 on:click={() => { isEditing = true; editTask = task; }}
               >
                 Edit
               </button>
         
               <button 
-                class="bg-red-500 hover:bg-red-600 active:scale-95 text-white font-medium py-1 px-3 rounded-lg shadow-md transition duration-300 ease-in-out"
+                class="bg-red-500 hover:bg-red-600 active:scale-95 font-medium py-1 px-3 rounded-lg shadow-md transition duration-300 ease-in-out {isDarkMode ? "text-black" : "text-white"}"
                 on:click={() => deleteTask(index)}
               >
                 Delete
