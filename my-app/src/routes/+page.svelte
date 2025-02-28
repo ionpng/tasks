@@ -243,6 +243,10 @@
 </script>
 <div class="flex h-screen w-full">
   <!-- Sidebar -->
+  {#if addFilters}
+    <AddFilter {uuid} bind:filters={filters} bind:originalFilters={originalFilters} bind:addFilters={addFilters} />
+  {/if}
+
   {#if !isMobile}
   <div class="w-[22vw] min-w-[300px] bg-white dark:bg-black text-black dark:text-white shadow-2xl rounded-3xl p-6 backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
     <h1 class="text-3xl font-semibold text-center mb-6">Tasks</h1>
