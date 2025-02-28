@@ -20,6 +20,7 @@
 	"type": "module",
 	"dependencies": {
 		"@supabase/supabase-js": "^2.42.5",
+		"mode-watcher": "^0.5.1",
 		"svelte-feather-icons": "^4.1.0",
 		"uuid": "^9.0.1"
 	}

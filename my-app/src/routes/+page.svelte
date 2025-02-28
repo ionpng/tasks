@@ -4,6 +4,7 @@
   import Edit from '$lib/components/Edit.svelte';
   import AddFilter from '$lib/components/AddFilter.svelte';
   import {SunIcon, MoonIcon, MenuIcon} from "svelte-feather-icons";
+  import { ModeWatcher } from "mode-watcher";
 
   let uuid;
   let isEditing = false;
@@ -25,14 +26,7 @@
   let filters = [];
   let addFilters = false;
 
-  let isDarkMode = false; // State for dark mode toggle
   
-  // Add this function to toggle dark mode
-  function toggleDarkMode() {
-    isDarkMode = !isDarkMode;
-    document.documentElement.classList.toggle('dark', isDarkMode); // Toggle 'dark' class on the HTML element
-  }
-
   let isMobile = false;
   let sidebarOpen = false;
 
@@ -247,63 +241,37 @@
     deleteTaskFilter(uuid, filter_name);
   }
 </script>
-<div class="flex h-screen w-[100vw] {isDarkMode ? "bg-gray-950":"bg-gray-50"}">
-  <!-- Sidebar -->
-  {#if isEditing}
-  <div class="z-20 fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-    <button class="z-10 fixed flex h-screen w-screen items-center justify-center"
-		on:click={() => {
-      isEditing=false
-		}}>
-    <div on:click|stopPropagation class="bg-white rounded-xl shadow-lg p-6">
-      <Edit {editTask} bind:isEditing={isEditing}/>
-    </div>
-  </div>
-  {/if}
-  {#if addFilters}
-  <div class="z-20 fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-    <button class="z-10 fixed flex h-screen w-screen items-center justify-center"
-		on:click={() => {
-      addFilters=false
-		}}>
-    <div on:click|stopPropagation class="bg-white rounded-xl shadow-lg p-6">
-      <AddFilter {uuid} bind:addFilters={addFilters}/>
-    </div>
-  </div>
-  {/if}
-
+<div class="flex h-screen w-full">
   <!-- Sidebar -->
   {#if !isMobile}
-  <div class="${isMobile ? "" : "w-[100vw]"} ${isDarkMode ? "bg-black text-white":"bg-white text-black"} shadow-xl rounded-lg p-4">
-    <h1 class="text-2xl font-semibold ${isDarkMode ? "text-white" : "text-gray-900"} mb-6">Tasks</h1>
-    <button class="bg-black text-white w-full px-4 py-2 rounded-lg transition duration-300 ease-in-out ${ isDarkMode ? "hover:bg-black hover:text-white border border-white" : "hover:bg-white hover:text-black border border-black"}" on:click={() => addFilters=true}
+  <div class="w-[22vw] min-w-[300px] bg-white dark:bg-black text-black dark:text-white shadow-2xl rounded-3xl p-6 backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
+    <h1 class="text-3xl font-semibold text-center mb-6">Tasks</h1>
 
+    <!-- Add Filter Button -->
+    <button 
+      class="w-full px-4 py-3 rounded-2xl shadow-lg transition duration-300 ease-in-out bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700"
+      on:click={() => addFilters = true}
     >
       Add Filter
     </button>
 
-    <label class="block text-sm font-medium text-gray-700 mt-4 mb-1">Filter</label>
-    <div class="space-y-2">
-      {#if isDarkMode}
+    <!-- Filters -->
+    <div class="mt-6 space-y-3">
+      <label class="text-lg font-medium text-gray-700 dark:text-gray-300">Filters</label>
+      
       <button 
-        class="{activeFilter === 'all' ? 'bg-blue-300 text-black' : 'bg-black text-white'} w-full px-4 py-2 rounded-lg transition duration-300 ease-in-out hover:bg-gray-800"
+        class="w-full px-4 py-2 rounded-xl transition duration-300 ease-in-out
+          {activeFilter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-800 dark:text-gray-300'}
+          hover:bg-gray-300 dark:hover:bg-gray-700"
         on:click={() => activeFilter = 'all'}
       >
         All
       </button>
-      {:else}
-      <button 
-        class="{activeFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'} w-full px-4 py-2 rounded-lg transition duration-300 ease-in-out hover:bg-gray-200"
-        on:click={() => activeFilter = 'all'}
-      >
-        All
-      </button>
-      {/if}
 
       {#each filters as filter}
-        <div class="relative ${isDarkMode ? "text-white" : "text-black"}">
+        <div class="relative">
           <button
-            class="w-full px-4 py-2 rounded-lg transition duration-300 ease-in-out hover:bg-gray-200"
+            class="w-full px-4 py-2 rounded-xl transition duration-300 ease-in-out"
             style="background-color: {taskTypeColors[filter.filter_name] || '#f3f4f6'}; color: {filter === activeFilter ? 'white' : 'black'}"
             on:click={() => activeFilter = filter}
           >
@@ -311,142 +279,125 @@
           </button>
           {#if filter == activeFilter}
           <button 
-            class="absolute right-2 top-2 bg-red-500 text-white w-6 h-6 flex items-center justify-center rounded-full transition duration-300 ease-in-out hover:bg-red-800"
+            class="absolute right-2 top-2 bg-red-500 text-white w-6 h-6 flex items-center justify-center rounded-full transition duration-300 ease-in-out hover:bg-red-700"
             on:click={() => multipledel(filter.uuid, filter.filter_name)}
           >
-            x
+            ×
           </button>
           {/if}
         </div>
       {/each}
-
+      
       <hr class="my-4 border-gray-300">
-      {#if isDarkMode}
-        <button 
-        class="{activeFilter === 'completed' ? 'bg-blue-300 text-black' : 'bg-black text-white'} w-full px-4 py-2 rounded-lg transition duration-300 ease-in-out hover:bg-gray-800"
+
+      <button 
+        class="w-full px-4 py-2 rounded-xl transition duration-300 ease-in-out
+          {activeFilter === 'completed' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-800 dark:text-gray-300'}
+          hover:bg-gray-300 dark:hover:bg-gray-700"
         on:click={() => activeFilter = 'completed'}
       >
         Completed
       </button>
-      {:else}
-        <button 
-          class="{activeFilter === 'completed' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'} w-full px-4 py-2 rounded-lg transition duration-300 ease-in-out hover:bg-gray-200"
-          on:click={() => activeFilter = 'completed'}
-        >
-          Completed
-        </button>
-      {/if}
     </div>
     <div class="fixed bottom-4 left-4">
-      <button class="w-8 h-8 p-0" variant="ghost" on:click={() => toggleDarkMode()}>
-        {#if isDarkMode}
           <SunIcon></SunIcon>
-        {:else}
-          <MoonIcon></MoonIcon>
-        {/if}
-      </button>
     </div>    
   </div>
   {/if}
-  <!-- Main Content Area -->
-  <div class="flex-1 overflow-y-auto p-8  ${isDarkMode ? "bg-black" : "bg-gray-50"} ${isMobile ? "w-[100vw]": "w-[85vw]"}">
-    <div class="flex items-center mb-6 space-x-4">
-    {#if isMobile}
-    <button class="w-8 h-8 p-0" variant="ghost"  on:click={() => toggleSidebar()}>
-      <MenuIcon></MenuIcon>
-    </button>
-    {/if}
-    <label class="text-sm font-medium text-gray-700">Sort by:</label>
-    <select bind:value={sortOption} class="${isDarkMode ?" bg-gray-950 text-white" : "bg-gray-50 text-black"} px-3 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm transition duration-200 text-gray-900">
-      <option value="none">None</option> <!-- Added "None" option -->
-      <option value="alphabetical">Alphabetical</option>
-      <option value="dueDate">Due Date</option>
-      <option value="filter">Task Type</option>
+
+  <!-- Main Content -->
+  <div class="flex-1 overflow-y-auto p-8 bg-gray-50 dark:bg-black transition-all">
+    <div class="flex items-center justify-between mb-6">
+      {#if isMobile}
+      <button class="w-10 h-10 bg-gray-200 dark:bg-gray-800 rounded-full flex items-center justify-center" on:click={() => toggleSidebar()}>
+        <MenuIcon></MenuIcon>
+      </button>
+      {/if}
+
+      <!-- Sorting -->
+      <div class="flex items-center space-x-4">
+        <label class="text-lg font-medium text-gray-700 dark:text-gray-300">Sort by:</label>
+        <select bind:value={sortOption} class="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white">
+          <option value="none">None</option>
+          <option value="alphabetical">Alphabetical</option>
+          <option value="dueDate">Due Date</option>
+          <option value="filter">Task Type</option>
+        </select>
+      </div>
+    </div>
+
+  <!-- Add Task -->
+  <div class="flex items-center space-x-4 mb-6">
+    <input
+      class="flex-1 px-4 py-3 rounded-2xl border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+      type="text"
+      placeholder="Add a task"
+      bind:value={newTask}
+      on:keydown={(e) => e.key === 'Enter' && addTask()}
+    />
+
+  <!-- Task Type Selector -->
+    <select 
+      bind:value={newTaskType} 
+      class="px-4 py-3 rounded-2xl border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white"
+    >
+      {#each filters as filter}
+        <option value={filter.filter_name}>{filter.filter_name}</option>
+      {/each}
     </select>
 
-    </div>
-    <div class="flex items-center mb-6 space-x-4">
-      <input
-        class="border border-gray-200 ${isDarkMode ?" bg-gray-950" : "bg-gray-50"} h-12 px-5 pr-16 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm transition duration-200 flex-1"
-        type="text"
-        placeholder="Add a task"
-        bind:value={newTask}
-        on:keydown={(e) => e.key === 'Enter' && addTask()}
-      />
-      <button
-        class="font-medium py-2 px-6 rounded-full shadow-md transition duration-200 focus:outline-none focus:ring-2 {isDarkMode ? "bg-blue-500 hover:bg-blue-400 text-black focus:ring-blue-600" : "bg-blue-500 hover:bg-blue-600 text-white focus:ring-blue-400"}"
-        on:click={addTask}
+    <button 
+      class="px-5 py-3 rounded-2xl bg-blue-500 hover:bg-blue-600 text-white shadow-lg transition-transform transform active:scale-95"
+      on:click={addTask}
+    >
+      Add
+    </button>
+</div>
+    <!-- Task List -->
+    <ul class="space-y-4">
+      {#each filteredTasks as task, index (index)}
+      <li 
+        class="flex items-center justify-between p-4 rounded-2xl shadow-md bg-white dark:bg-gray-900 transition-all"
+        draggable="true" 
+        on:dragstart={() => dragStart(index)} 
+        on:dragover={(e) => dragOver(e)} 
+        on:drop={() => drop(index)}
       >
-        Add
-      </button>
-    </div>
-    
-    <div class="mb-6 space-x-4">
-          
-      <label class="text-sm font-medium text-gray-700 ml-8">Type</label>
-      <select bind:value={newTaskType} class="${isMobile ? "w-[90vw]" : "w-1/4"} {isDarkMode ?" bg-gray-950 text-white" : "bg-gray-50 text-black"} px-3 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm transition duration-200 text-gray-900">
-        {#each filters as filter}
-          <option value={filter} class="py-2 hover:bg-gray-100">{filter.filter_name}</option>
-        {/each}
-      </select>
-    
-      <label class="text-sm font-medium text-gray-700 ml-8">Due Date</label>
-      <input class=" ${isMobile ? "w-[90vw]" : "w-1/4"}{isDarkMode ?" bg-gray-950" : "bg-gray-50"} px-3 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400  shadow-sm transition duration-200" type="text" bind:value={newTaskDueDate} placeholder="Enter Due Date" />
-      
-      <label class="text-sm font-medium text-gray-700 ml-8">Description</label>
-      <input class="${isMobile ? "w-[90vw]" : "w-1/4"} {isDarkMode ?" bg-gray-950" : "bg-gray-50"} px-3 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400  shadow-sm transition duration-200" type="text" bind:value={newTaskDescription} placeholder="Enter Description" />
-      
-      <label class="text-sm font-medium text-gray-700 ml-8">Points</label>
-      <input type="number" class="${isMobile ? "w-[90vw]" : "w-1/4"} {isDarkMode ?" bg-gray-950" : "bg-gray-50"} px-3 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400  shadow-sm transition duration-200" bind:value={newTaskPoints} placeholder="Enter Task Points" />
-    </div>
-        <ul class="space-y-4">
-          {#each filteredTasks as task, index (index)}
-          <li 
-            class=" ${isMobile ? "w-[100vw]" : "" } flex justify-between items-center p-4 rounded-lg shadow-lg mb-4 transition duration-300 ease-in-out hover:shadow-xl {isDarkMode? "bg-black" : "bg-white"}" 
-            draggable="true" 
-            on:dragstart={() => dragStart(index)} 
-            on:dragover={(e) => dragOver(e)} 
-            on:drop={() => drop(index)}
+        <span class="w-4 h-4 mr-3 rounded-full block" style="background-color: {taskTypeColors[task.task_type]}"></span>
+
+        <div class="flex-1">
+          <span class="font-semibold text-gray-900 dark:text-white">{task.task_name} {#if task.task_points} ({task.task_points} pts) {/if}</span>
+          <span class="block text-sm text-gray-600 dark:text-gray-400">{task.task_description}</span>
+        </div>
+
+        {#if task.task_due_date}
+          <span class="text-gray-500 dark:text-gray-400 text-sm mr-6">Due: {task.task_due_date}</span>
+        {/if}
+
+        <div class="flex space-x-2">
+          <button 
+            class="bg-green-500 px-4 py-2 rounded-xl text-white shadow-md transition-transform transform active:scale-95 hover:bg-green-600"
+            on:click={() => toggleComplete(task.id)}
           >
-            <!-- Colored indicator based on task type -->
-            <span class="w-4 h-4 mr-3 rounded-full block" style="background-color: {taskTypeColors[task.task_type]}"></span>
-            
-            <!-- Task name, description, and points -->
-            <div class="flex-1">
-              <span class="font-bold block {isDarkMode? "text-gray-100":"text-gray-900"}">{task.task_name} {#if task.task_points} ({task.task_points} pts) {/if}</span>
-              <span class="text-sm text-gray-600 block">{task.task_description}</span>
-            </div>
-        
-            <!-- Due date -->
-            {#if task.task_due_date}
-              <span class="text-gray-500 ml-4 text-sm mr-6">Due: {task.task_due_date}</span>
-            {/if}
-        
-            <!-- Action buttons -->
-            <div class="flex items-center space-x-2">
-              <button 
-                class="bg-green-500 hover:bg-green-600 active:scale-95 font-medium py-1 px-3 rounded-lg shadow-md transition duration-300 ease-in-out {isDarkMode ? "text-black" : "text-white"}"
-                on:click={() => toggleComplete(task.id)}
-              >
-                {task.task_completed ? 'Undo' : 'Complete'}
-              </button>
-        
-              <button 
-                class="bg-blue-500 hover:bg-blue-600 active:scale-95 font-medium py-1 px-3 rounded-lg shadow-md transition duration-300 ease-in-out {isDarkMode ? "text-black" : "text-white"}"
-                on:click={() => { isEditing = true; editTask = task; }}
-              >
-                Edit
-              </button>
-        
-              <button 
-                class="bg-red-500 hover:bg-red-600 active:scale-95 font-medium py-1 px-3 rounded-lg shadow-md transition duration-300 ease-in-out {isDarkMode ? "text-black" : "text-white"}"
-                on:click={() => deleteTask(index)}
-              >
-                Delete
-              </button>
-            </div>
-          </li>
-        {/each}
-            </ul>
+            {task.task_completed ? 'Undo' : 'Complete'}
+          </button>
+
+          <button 
+            class="bg-blue-500 px-4 py-2 rounded-xl text-white shadow-md transition-transform transform active:scale-95 hover:bg-blue-600"
+            on:click={() => { isEditing = true; editTask = task; }}
+          >
+            Edit
+          </button>
+
+          <button 
+            class="bg-red-500 px-4 py-2 rounded-xl text-white shadow-md transition-transform transform active:scale-95 hover:bg-red-600"
+            on:click={() => deleteTask(index)}
+          >
+            Delete
+          </button>
+        </div>
+      </li>
+      {/each}
+    </ul>
   </div>
 </div>
